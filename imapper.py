@@ -115,6 +115,7 @@ def parse(tokens, token):
             response['data'] = data
 
         while token.type != 'eol':
+            # Collect message tokens, include whitespace
             message += token.value
             token = next(tokens)
 
