@@ -53,6 +53,10 @@ class Token(collections.namedtuple('Token', 'type value')):
 def lex(source):
     while True:
         line = source.readline()
+        if not line:
+            # raises StopIteration at end of file
+            # https://docs.python.org/3/library/io.html#io.TextIOBase.readline
+            break
         size = None
         for mo in re.finditer(token_pattern, line):
             key = mo.lastgroup
@@ -161,21 +165,24 @@ class Client:
             return context.wrap_socket(s, server_hostname=self.host)
         return s
 
-    def get_response(self, tag=None):
+    def get_response(self, tag=None, name=None):
 
         responses = []
         tokens = lex(self.file)
         token = None
-        while True:
-            response = parse(tokens, token)
-            responses.append(response)
-            if self.debug:
-                logger.info(response)
-            if not tag or (tag and response['tag'] == tag):
-                break
-            if response['type'] in [b'BYE', b'BAD']:
-                break
-        
+        try:
+            while True:
+                response = parse(tokens, token)
+                responses.append(response)
+                if self.debug:
+                    logger.info(response)
+                if not tag or (tag and response['tag'] == tag):
+                    # If this check is not included, a failing login command leads to a timeout,
+                    # it does not raise StopIteration (?!)
+                    break
+        except StopIteration:
+            # React to StopIteration raised by lexer
+            pass        
         return responses
 
     def _send_command(self, *args):
@@ -198,7 +205,7 @@ class Client:
     def command(self, name, *args):
         tag = self._get_tag()
         self._send_command(tag, name, *args)
-        response = self.get_response(tag)
+        response = self.get_response(tag, name)
         
         return response
 
@@ -212,6 +219,10 @@ class Client:
     def login(self, username, password):
         name = b'LOGIN'
         return self.command(name, username, password)
+
+    def logout(self):
+        name = b'LOGOUT'
+        return self.command(name)
 
     def capability(self):
         name = b'CAPABILITY'

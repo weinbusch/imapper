@@ -14,6 +14,7 @@ def main():
         c.select()
         c.search('ALL')
         c.fetch(uid, '(RFC822)', uid=True)
+        c.logout()
 
 if __name__ == '__main__':
     main()
