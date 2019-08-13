@@ -35,6 +35,7 @@ token_res = [
     r'(?P<close_paren>\))',
     r'\{(?P<octet_count>\d+)\}',
     r'(?P<number>\d+\.?\d*)',
+    r'"(?P<quoted_string>.*?)"',
     r'(?P<atom>[^{}]+)'.format(re.escape('()][ \r\n')),
     r'(?P<eol>\r\n)',
     r'(?P<whitespace>[ ]+)',
